@@ -3,6 +3,10 @@
 
     <string name="action_settings">Settings</string>
     <string name="check_fps">Check FPS</string>
-    <string name="start_preview">Start Preview</string>
-    <string name="stop">Stop Camera</string>
+    <string name="start_preview">Preview</string>
+    <string name="capture_start_stop">Capture</string>
+    <string name="capture_start" >Capture Start</string>
+    <string name="capture_stop">Capture Stop</string>
+    <string name="preview_start">Preview Start</string>
+    <string name="preview_stop">Preview Stop</string>
 </resources>

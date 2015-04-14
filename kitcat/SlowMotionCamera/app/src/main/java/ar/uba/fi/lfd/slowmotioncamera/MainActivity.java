@@ -1,10 +1,7 @@
 package ar.uba.fi.lfd.slowmotioncamera;
 
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
-import android.provider.MediaStore;
+import android.content.res.Configuration;
+import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,14 +10,19 @@ import android.view.MenuItem;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.NumberPicker;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
+import java.io.File;
+
+import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraCaptureError;
+import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraError;
+import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraPreviewError;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -33,33 +35,46 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         Log.i(TAG, "Starting Application");
-        Button checkFPS = (Button)findViewById(R.id.check_fps_button);
-        final Button startPreview = (Button)findViewById(R.id.camera_preview_button);
-        final Button stopPreview = (Button)findViewById(R.id.camera_stop_button);
-        final NumberPicker minFPS = (NumberPicker)findViewById(R.id.min_fps);
-        final NumberPicker maxFPS = (NumberPicker)findViewById(R.id.max_fps);
-        TextureView previewTexture = (TextureView) findViewById(R.id.cameraPreviewTexture);
-        final TextView fpsRanges = (TextView)findViewById(R.id.fps_ranges   );
+        final LinearLayout fpsControlPanel = (LinearLayout) findViewById(R.id.fps_control_panel);
+        final Button checkFPS = (Button) findViewById(R.id.check_fps_button);
+        final ToggleButton previewStartStop = (ToggleButton) findViewById(R.id.preview_start_stop);
+        final ToggleButton captureStartStop = (ToggleButton) findViewById(R.id.capture_start_stop);
+        final SeekBar fps = (SeekBar) findViewById(R.id.fps_bar);
+        final TextView fpsLabel = (TextView) findViewById(R.id.fps_label);
+        final TextureView previewTexture = (TextureView) findViewById(R.id.camera_preview_texture);
+        final TextView fpsRanges = (TextView) findViewById(R.id.fps_ranges);
+        final ImageView capturedImage = (ImageView) findViewById(R.id.captured_image);
+        fpsControlPanel.setVisibility(View.INVISIBLE);
+        previewStartStop.setVisibility(View.INVISIBLE);
+        captureStartStop.setVisibility(View.INVISIBLE);
 
         this.cameraPreview = new CameraPreview(this, previewTexture);
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+            cameraPreview.setPortrait();
+        else
+            cameraPreview.setLandscape();
 
-        NumberPicker.OnValueChangeListener fpsPickerListener = new NumberPicker.OnValueChangeListener() {
+
+        fps.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-                Log.i(TAG, "OnValueChange captured. Computing FPS for camera...");
-                if (minFPS.getValue() >= maxFPS.getValue())
-                    picker.setValue(oldVal);
-                else
-                    try {
-                        cameraPreview.changeFPS(minFPS.getValue(), maxFPS.getValue());
-                    } catch (CameraPreviewError cameraPreviewError) {
-                        notifyError(cameraPreviewError);
-                    }
-                Log.i(TAG, "OnValueChange captured. Finished computing FPS for camera");
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                try {
+                    int fps = progress + cameraPreview.getMinFPS();
+                    Log.i(TAG, String.format("onProgressChanged captured. Computing FPS %d for camera...", fps));
+                    cameraPreview.changeFPS(fps);
+                    fpsLabel.setText(String.format("%d fps", fps));
+                } catch (CameraPreviewError cameraPreviewError) {
+                    notifyError(cameraPreviewError);
+                }
+                Log.i(TAG, "onProgressChanged captured. Finished computing FPS for camera");
             }
-        };
-        minFPS.setOnValueChangedListener(fpsPickerListener);
-        maxFPS.setOnValueChangedListener(fpsPickerListener);
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
 
         checkFPS.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,48 +83,52 @@ public class MainActivity extends ActionBarActivity {
                     fpsRanges.setText(cameraPreview.getSupportedFPSDetails());
                     int min = cameraPreview.getMinFPS();
                     int max = cameraPreview.getMaxFPS();
-                    minFPS.setMinValue(min);
-                    minFPS.setMaxValue(max);
-                    minFPS.setValue(min);
-                    maxFPS.setMinValue(min);
-                    maxFPS.setMaxValue(max);
-                    maxFPS.setValue(max);
-
-                    startPreview.setVisibility(View.VISIBLE);
+                    fps.setMax(max - min);
+                    fps.setProgress(max - min);
+                    checkFPS.setVisibility(View.INVISIBLE);
+                    fpsControlPanel.setVisibility(View.VISIBLE);
+                    previewStartStop.setVisibility(View.VISIBLE);
                 } catch (CameraPreviewError cameraPreviewError) {
                     notifyError(cameraPreviewError);
                 }
             }
         });
-        startPreview.setOnClickListener(new View.OnClickListener() {
+        previewStartStop.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
             @Override
-            public void onClick(View v) {
+            public void onCheckedChanged(CompoundButton v, boolean isChecked){
                 try {
-                    cameraPreview.startCamera();
-                    startPreview.setVisibility(View.INVISIBLE);
-                    stopPreview.setVisibility(View.VISIBLE);
+                    if (isChecked) {
+                        cameraPreview.startCamera();
+                        captureStartStop.setVisibility(View.VISIBLE);
+                    } else {
+                        cameraPreview.stopCamera();
+                        captureStartStop.setVisibility(View.INVISIBLE);
+                    }
                 } catch (CameraPreviewError cameraPreviewError) {
                     notifyError(cameraPreviewError);
                 }
             }
         });
-
-        stopPreview.setOnClickListener(new View.OnClickListener() {
+        captureStartStop.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
             @Override
-            public void onClick(View v) {
+            public void onCheckedChanged(CompoundButton v, boolean isChecked){
                 try {
-                    cameraPreview.stopCamera();
-                    startPreview.setVisibility(View.VISIBLE);
-                    stopPreview.setVisibility(View.INVISIBLE);
-                } catch (CameraPreviewError cameraPreviewError) {
-                    notifyError(cameraPreviewError);
+                    if (isChecked) {
+                        String targetFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "LFD").getPath();
+                        cameraPreview.startCapture(targetFolder);
+                    }
+                    else {
+                        cameraPreview.stopCapture();
+                    }
+                } catch (CameraError e) {
+                    notifyError(e);
                 }
             }
         });
     }
 
-    private void notifyError(CameraPreviewError cameraPreviewError) {
-        Toast.makeText(MainActivity.this, cameraPreviewError.getMessage(), Toast.LENGTH_LONG).show();
+    private void notifyError(CameraError cameraPreviewError) {
+        Toast.makeText(MainActivity.this, cameraPreviewError.getMessage(), Toast.LENGTH_SHORT).show();
         Log.e(TAG, "There was an error using the camera", cameraPreviewError);
     }
 

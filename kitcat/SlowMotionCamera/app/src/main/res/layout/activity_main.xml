@@ -15,58 +15,48 @@
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
         android:orientation="vertical"
+        android:id="@+id/fps_control_panel"
         >
         <LinearLayout
             android:layout_width="match_parent" android:layout_height="match_parent"
             android:orientation="horizontal"
             >
             <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="FPS Ranges:"
-            android:layout_gravity="center_horizontal|left|top" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:id="@+id/fps_ranges"
-            android:layout_gravity="center_horizontal|left|top" />
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="fill_parent" android:layout_height="wrap_content"
-            android:background="@color/overlayed_block" android:orientation="horizontal"
-            android:gravity="center">
-
+                android:layout_margin="10px"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FPS Ranges:"
+                android:layout_gravity="center_horizontal|left|top"
+                android:gravity="center_vertical" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="MIN"/>
-
-            <NumberPicker
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/min_fps"/>
+                android:id="@+id/fps_ranges"
+                android:layout_gravity="center_horizontal|left|top"
+                android:gravity="center_vertical" />
+        </LinearLayout>
 
             <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="MAX"/>
-
-            <NumberPicker
-                android:layout_width="wrap_content"
+                android:gravity="center"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/max_fps"/>
+                android:text="FPS"
+                android:id="@+id/fps_label" />
 
-        </LinearLayout>
+            <SeekBar
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/fps_bar"
+                android:layout_weight="1" />
     </LinearLayout>
 
     <TextureView
-        android:id="@+id/cameraPreviewTexture"
+        android:id="@+id/camera_preview_texture"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_weight="1"
         />
+
 
     <LinearLayout
         android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -79,21 +69,27 @@
             android:layout_height="wrap_content"
             android:text="@string/check_fps"
             android:layout_gravity="center" />
-        <Button android:id="@+id/camera_preview_button" style="@style/ButtonBarButton"
+        <ToggleButton android:id="@+id/preview_start_stop" style="@style/ButtonBarButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/start_preview"
             android:layout_gravity="center"
-            android:visibility="invisible"
-            />
-        <Button android:id="@+id/camera_stop_button" style="@style/ButtonBarButton"
+            android:textOff="@string/preview_start"
+            android:textOn="@string/preview_stop"
+            android:checked="false" />
+        <ToggleButton android:id="@+id/capture_start_stop" style="@style/ButtonBarButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/stop"
+            android:text="@string/capture_start_stop"
             android:layout_gravity="center"
-            android:visibility="invisible"
-            />
+            android:checked="false"
+            android:textOff="@string/capture_start"
+            android:textOn="@string/capture_stop" />
 
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/captured_image" />
     </LinearLayout>
 </LinearLayout>
 
