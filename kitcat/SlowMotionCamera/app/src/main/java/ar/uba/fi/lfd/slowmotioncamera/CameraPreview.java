@@ -33,64 +33,13 @@ public class CameraPreview {
     private boolean onPreview;
     private boolean onCapture;
     private String captureFolder;
-    private Camera.PictureCallback jpgCallback;
-    private Camera.PictureCallback rawCallback;
-    private Camera.ShutterCallback shutterCallback;
+    private CaptureTask captureTask;
     private boolean orientationLandscape;
 
-    public CameraPreview(Context context, TextureView previewTexture){
+    public CameraPreview(Context context, TextureView previewTexture, ScreenNotifier notifier){
         this.context = context;
         this.previewTexture = previewTexture;
-        this.shutterCallback = new Camera.ShutterCallback() {
-            @Override
-            public void onShutter() {
-                Log.d(TAG, "Camera Shutter detected");
-                if (onCapture) {
-                    try {
-                        Log.d(TAG, "New Capture scheduled");
-                        CameraPreview.this.getCamera().takePicture(shutterCallback, rawCallback,jpgCallback);
-                    } catch (CameraError e) {
-                        Log.e(TAG, "There was an error taking pictures with the camera", e);
-                    }
-                }
-                else
-                    Log.d(TAG, "No new capture required. Capture stopped.");
-            }
-        };
-
-        this.rawCallback = new Camera.PictureCallback() {
-            @Override
-            public void onPictureTaken(byte[] data, Camera camera) {
-                if (data == null)
-                    Log.d(TAG, "Empty RAW image detected");
-                else
-                    Log.d(TAG, String.format("Camera RAW image detected. Size: %d KB", data.length / 1024));
-
-            }
-        };
-        this.jpgCallback = new Camera.PictureCallback() {
-            @Override
-            public void onPictureTaken(byte[] data, Camera camera) {
-                if (data == null)
-                    Log.d(TAG, "Empty JPG image detected");
-                else {
-                    Log.d(TAG, String.format("Camera JPG image detected. Size: %d KB\n", data.length / 1024));
-                    File imagesFolder = new File(CameraPreview.this.captureFolder);
-                    if (!imagesFolder.exists())
-                        imagesFolder.mkdirs();
-                    String timestamp = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-                    String filename = timestamp + "capture.jpg";
-                    File output = new File(imagesFolder, filename);
-                    try {
-                        FileOutputStream fos = new FileOutputStream(output);
-                        fos.write(data);
-                        fos.close();
-                    } catch (IOException e) {
-                        Log.e(TAG, String.format("There was an error writing the captured picture to the device storage. Folder: %s. Filename: %s", CameraPreview.this.captureFolder, filename), e);
-                    }
-                }
-            }
-        };
+        this.captureTask = new CaptureTask(this, notifier);
     }
 
 
@@ -115,14 +64,12 @@ public class CameraPreview {
         if (!this.onPreview)
             throw new CameraCaptureError("It is not possible to capture images since preview was not activated");
         Log.d(TAG, "Starting Capture...");
-        this.onCapture = true;
-        this.captureFolder = folder;
-        this.getCamera().takePicture(shutterCallback, rawCallback, jpgCallback);
+        this.captureTask.startCapturing(folder, this.getMaxFPS());
     }
 
     public void stopCapture() {
         Log.d(TAG, "Stopping Capture...");
-        this.onCapture = false;
+        this.captureTask.stopCapturing();
     }
 
     private void checkFPSInRange(int fps) throws CameraPreviewError {
@@ -212,7 +159,7 @@ public class CameraPreview {
         return (fpsToSanitize >= 1000)? fpsToSanitize / 1000 : fpsToSanitize;
     }
 
-    private Camera getCamera() throws CameraPreviewError {
+    public Camera getCamera() throws CameraPreviewError {
         if (this.camera == null) {
             Log.i(TAG, "Opening Camera...");
             this.camera = this.openCamera();

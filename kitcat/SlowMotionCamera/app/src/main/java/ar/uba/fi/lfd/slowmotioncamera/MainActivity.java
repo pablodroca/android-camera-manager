@@ -28,6 +28,7 @@ import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraPreviewError;
 public class MainActivity extends ActionBarActivity {
     private final static String TAG = MainActivity.class.getName();
     private CameraPreview cameraPreview;
+    private ScreenNotifier notifier;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +49,9 @@ public class MainActivity extends ActionBarActivity {
         previewStartStop.setVisibility(View.INVISIBLE);
         captureStartStop.setVisibility(View.INVISIBLE);
 
-        this.cameraPreview = new CameraPreview(this, previewTexture);
+        this.notifier = new ScreenNotifier(this);
+        this.cameraPreview = new CameraPreview(this, previewTexture, this.notifier);
+
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
             cameraPreview.setPortrait();
         else
@@ -128,7 +131,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void notifyError(CameraError cameraPreviewError) {
-        Toast.makeText(MainActivity.this, cameraPreviewError.getMessage(), Toast.LENGTH_SHORT).show();
+        notifier.showError(cameraPreviewError.getMessage());
         Log.e(TAG, "There was an error using the camera", cameraPreviewError);
     }
 
