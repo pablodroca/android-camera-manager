@@ -1,4 +1,4 @@
-package ar.uba.fi.lfd.slowmotioncamera;
+package ar.uba.fi.lfd.slowmotioncamera.capturing;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -6,16 +6,11 @@ import android.hardware.Camera;
 import android.util.Log;
 import android.view.TextureView;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
+import ar.uba.fi.lfd.slowmotioncamera.OrientationHandler;
+import ar.uba.fi.lfd.slowmotioncamera.ScreenNotifier;
 import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraCaptureError;
-import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraError;
 import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraPreviewError;
 
 /**
@@ -34,12 +29,14 @@ public class CameraPreview {
     private boolean onCapture;
     private String captureFolder;
     private CaptureTask captureTask;
-    private boolean orientationLandscape;
+    private OrientationHandler orientationHandler;
+    private ScreenNotifier notifier;
 
     public CameraPreview(Context context, TextureView previewTexture, ScreenNotifier notifier){
         this.context = context;
         this.previewTexture = previewTexture;
-        this.captureTask = new CaptureTask(this, notifier);
+        this.notifier = notifier;
+        this.orientationHandler = new OrientationHandler(context);
     }
 
 
@@ -50,10 +47,6 @@ public class CameraPreview {
         this.checkFPSInRange(fps);
         Camera.Parameters params = this.getCamera().getParameters();
         this.getCamera().enableShutterSound(false);
-        if (this.orientationLandscape)
-            params.set("orientation", "landscape");
-        else
-            params.set("orientation", "portrait");
         params.setPreviewFpsRange(fps * 1000, fps * 1000);
         this.getCamera().setParameters(params);
         if (this.onPreview)
@@ -61,15 +54,19 @@ public class CameraPreview {
     }
 
     public void startCapture(String folder) throws CameraCaptureError, CameraPreviewError {
+        if (this.captureTask != null)
+            throw new CameraCaptureError("It is not possible to start the picture capturing. Another capture is still in progress.");
         if (!this.onPreview)
             throw new CameraCaptureError("It is not possible to capture images since preview was not activated");
         Log.d(TAG, "Starting Capture...");
+        this.captureTask = new CaptureTask(this, this.notifier, this.orientationHandler);
         this.captureTask.startCapturing(folder, this.getMaxFPS());
     }
 
     public void stopCapture() {
         Log.d(TAG, "Stopping Capture...");
         this.captureTask.stopCapturing();
+        this.captureTask = null;
     }
 
     private void checkFPSInRange(int fps) throws CameraPreviewError {
@@ -97,6 +94,7 @@ public class CameraPreview {
 
     public void startCamera() throws CameraPreviewError {
         try {
+            this.getCamera().setDisplayOrientation(this.orientationHandler.getDegrees());
             this.getCamera().setPreviewTexture(previewTexture.getSurfaceTexture());
             this.getCamera().startPreview();
             this.onPreview = true;
@@ -193,13 +191,5 @@ public class CameraPreview {
             }
         }
         throw new CameraPreviewError("No back facing camera found");
-    }
-
-    public void setPortrait() {
-        this.orientationLandscape = false;
-    }
-
-    public void setLandscape() {
-        this.orientationLandscape = true;
     }
 }

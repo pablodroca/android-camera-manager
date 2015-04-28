@@ -1,6 +1,5 @@
 package ar.uba.fi.lfd.slowmotioncamera;
 
-import android.content.res.Configuration;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -15,12 +14,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.io.File;
 
-import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraCaptureError;
+import ar.uba.fi.lfd.slowmotioncamera.capturing.CameraPreview;
 import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraError;
 import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraPreviewError;
 
@@ -51,12 +49,6 @@ public class MainActivity extends ActionBarActivity {
 
         this.notifier = new ScreenNotifier(this);
         this.cameraPreview = new CameraPreview(this, previewTexture, this.notifier);
-
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
-            cameraPreview.setPortrait();
-        else
-            cameraPreview.setLandscape();
-
 
         fps.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
