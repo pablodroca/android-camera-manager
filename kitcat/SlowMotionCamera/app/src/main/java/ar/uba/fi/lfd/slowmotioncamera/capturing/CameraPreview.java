@@ -54,17 +54,21 @@ public class CameraPreview {
     }
 
     public void startCapture(String folder) throws CameraCaptureError, CameraPreviewError {
-        if (this.captureTask != null)
-            throw new CameraCaptureError("It is not possible to start the picture capturing. Another capture is still in progress.");
-        if (!this.onPreview)
-            throw new CameraCaptureError("It is not possible to capture images since preview was not activated");
         Log.d(TAG, "Starting Capture...");
+        if (this.captureTask != null) {
+            throw new CameraCaptureError("It is not possible to start the picture capturing. Another capture is still in progress.");
+        }
+        if (!this.onPreview) {
+            throw new CameraCaptureError("It is not possible to capture images since preview was not activated");
+        }
         this.captureTask = new CaptureTask(this, this.notifier, this.orientationHandler);
         this.captureTask.startCapturing(folder, this.getMaxFPS());
     }
 
-    public void stopCapture() {
+    public void stopCapture() throws CameraCaptureError {
         Log.d(TAG, "Stopping Capture...");
+        if (this.captureTask == null)
+            throw new CameraCaptureError("There is no capturing in progress.");
         this.captureTask.stopCapturing();
         this.captureTask = null;
     }
@@ -76,7 +80,7 @@ public class CameraPreview {
             throw new CameraPreviewError(String.format("The given FPS (%d) should be in the camera range: [%d-%d]", fps, min, max));
     }
 
-    private void resumeCamera() throws CameraPreviewError {
+    public void resumeCamera() throws CameraPreviewError {
         try {
             this.getCamera().startPreview();
         } catch (Exception e) {
@@ -84,7 +88,7 @@ public class CameraPreview {
         }
     }
 
-    private void pauseCamera() throws CameraPreviewError {
+    public void pauseCamera() throws CameraPreviewError {
         try {
             this.getCamera().stopPreview();
         } catch (Exception e) {

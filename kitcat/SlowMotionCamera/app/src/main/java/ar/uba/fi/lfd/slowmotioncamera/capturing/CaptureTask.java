@@ -83,8 +83,8 @@ public class CaptureTask extends AsyncTask<Void, Void, CaptureTaskResult> {
         try {
             samplesRecorder.init();
             while(continueCapturing) {
-                Thread.sleep(1000);
                 synchronized(captures) {
+                    preview.resumeCamera();
                     preview.getCamera().takePicture(shutterCallback, rawCallback, jpgCallback);
                     captures.wait();
                     Log.d(TAG, String.format("Picture %d captured.", ++capturesQty));

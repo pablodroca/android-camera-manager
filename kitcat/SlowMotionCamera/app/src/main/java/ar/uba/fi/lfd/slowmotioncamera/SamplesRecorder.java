@@ -41,7 +41,7 @@ public class SamplesRecorder {
         this.writer.write(time);
         for (int digit: data) {
             this.writer.write(',');
-            this.writer.write(digit);
+            this.writer.write(String.valueOf(digit));
         }
         this.writer.write('\n');
     }
