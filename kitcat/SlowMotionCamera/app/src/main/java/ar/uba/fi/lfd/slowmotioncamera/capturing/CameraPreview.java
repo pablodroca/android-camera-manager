@@ -6,6 +6,7 @@ import android.hardware.Camera;
 import android.util.Log;
 import android.view.TextureView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import ar.uba.fi.lfd.slowmotioncamera.OrientationHandler;
@@ -26,11 +27,10 @@ public class CameraPreview {
     private int minPreviewFPS;
     private int maxPreviewFPS;
     private boolean onPreview;
-    private boolean onCapture;
-    private String captureFolder;
     private CaptureTask captureTask;
     private OrientationHandler orientationHandler;
     private ScreenNotifier notifier;
+    private boolean cameraMilliFPSEnabled;
 
     public CameraPreview(Context context, TextureView previewTexture, ScreenNotifier notifier){
         this.context = context;
@@ -47,7 +47,8 @@ public class CameraPreview {
         this.checkFPSInRange(fps);
         Camera.Parameters params = this.getCamera().getParameters();
         this.getCamera().enableShutterSound(false);
-        params.setPreviewFpsRange(fps * 1000, fps * 1000);
+        int cameraFPS = ( this.cameraMilliFPSEnabled ) ? fps * 1000 : fps;
+        params.setPreviewFpsRange(cameraFPS, cameraFPS);
         this.getCamera().setParameters(params);
         if (this.onPreview)
             this.resumeCamera();
@@ -144,22 +145,34 @@ public class CameraPreview {
 
     private void collectCameraParameters() throws CameraPreviewError {
         Camera.Parameters parameters = this.getCamera().getParameters();
-        this.supportedPreviewFps = parameters.getSupportedPreviewFpsRange();
+        List<int[]> previewFpsRanges = parameters.getSupportedPreviewFpsRange();
+        this.supportedPreviewFps = new ArrayList<int[]>();
         this.minPreviewFPS = Integer.MAX_VALUE;
         this.maxPreviewFPS = Integer.MIN_VALUE;
-        for(int[] fpsRange: supportedPreviewFps){
-            fpsRange[0] = this.sanitizeFPS(fpsRange[0]);
-            fpsRange[1] = this.sanitizeFPS(fpsRange[1]);
-            if (fpsRange[0] < this.minPreviewFPS )
-                this.minPreviewFPS  = fpsRange[0];
-            if (fpsRange[1] > this.maxPreviewFPS)
-                this.maxPreviewFPS = fpsRange[1];
+        for(int[] fpsRange: previewFpsRanges){
+            int[] sanitizedFpsRange = this.sanitizeFpsRange(fpsRange);
+            this.supportedPreviewFps.add(sanitizedFpsRange);
+            if (sanitizedFpsRange[0] < this.minPreviewFPS )
+                this.minPreviewFPS  = sanitizedFpsRange[0];
+            if (sanitizedFpsRange[1] > this.maxPreviewFPS)
+                this.maxPreviewFPS = sanitizedFpsRange[1];
         }
     }
 
-    private int sanitizeFPS(int fpsToSanitize) {
-        return (fpsToSanitize >= 1000)? fpsToSanitize / 1000 : fpsToSanitize;
+    private int[] sanitizeFpsRange(int[] fpsToSanitize) {
+        if (fpsToSanitize[0] >= 1000) {
+            this.cameraMilliFPSEnabled = true;
+            int[] fpsSanitized = new int[2];
+            fpsSanitized[0] = (int) Math.ceil(fpsToSanitize[0] / 1000.0);
+            fpsSanitized[1] = (int) Math.floor(fpsToSanitize[1] / 1000.0);
+            return fpsSanitized;
+        }
+        else {
+            this.cameraMilliFPSEnabled = false;
+            return fpsToSanitize;
+        }
     }
+
 
     public Camera getCamera() throws CameraPreviewError {
         if (this.camera == null) {

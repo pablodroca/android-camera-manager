@@ -1,7 +1,7 @@
 package ar.uba.fi.lfd.slowmotioncamera;
 
+import android.app.Activity;
 import android.os.Environment;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -23,7 +23,7 @@ import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraError;
 import ar.uba.fi.lfd.slowmotioncamera.exceptions.CameraPreviewError;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends Activity {
     private final static String TAG = MainActivity.class.getName();
     private CameraPreview cameraPreview;
     private ScreenNotifier notifier;

@@ -37,23 +37,8 @@ public class CaptureTask extends AsyncTask<Void, Void, CaptureTaskResult> {
         this.preview = preview;
         this.notifier = notifier;
         this.orientationHandler = orientationHandler;
-        this.shutterCallback = new Camera.ShutterCallback() {
-            @Override
-            public void onShutter() {
-                Log.d(TAG, "Camera Shutter detected");
-            }
-        };
-
-        this.rawCallback = new Camera.PictureCallback() {
-            @Override
-            public void onPictureTaken(byte[] data, Camera camera) {
-                if (data == null)
-                    Log.d(TAG, "Empty RAW image detected");
-                else
-                    Log.d(TAG, String.format("Camera RAW image detected. Size: %d KB", data.length / 1024));
-
-            }
-        };
+        this.shutterCallback = null;
+        this.rawCallback = null;
         this.jpgCallback = new Camera.PictureCallback() {
             @Override
             public void onPictureTaken(byte[] data, Camera camera) {
