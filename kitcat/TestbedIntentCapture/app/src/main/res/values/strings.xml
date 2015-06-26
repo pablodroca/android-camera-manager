@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">TestbedIntentCapture</string>
+    <string name="action_settings">Settings</string>
+    <string name="preview_start">Preview Start</string>
+    <string name="preview_stop">Preview Stop</string>
+    <string name="capture">Capture</string>
+</resources>
