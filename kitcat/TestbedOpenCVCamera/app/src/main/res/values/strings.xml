@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">OpenCVCameraTest</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="gray_mode">Gray Mode</string>
+    <string name="color_mode">Color</string>
+</resources>
