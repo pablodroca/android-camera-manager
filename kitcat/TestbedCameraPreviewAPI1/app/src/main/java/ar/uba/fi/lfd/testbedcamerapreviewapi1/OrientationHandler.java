@@ -1,19 +1,18 @@
-package ar.uba.fi.lfd.opencvcameratest;
+package ar.uba.fi.lfd.testbedcamerapreviewapi1;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
-
-import org.opencv.core.Mat;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by pablo.roca on 28/06/2015.
+ * Created by fluidodinamica on 27/04/15.
  */
-
 public class OrientationHandler {
     private Display display;
     private Map<Integer, Integer> displayRotationPreviewOrientationMap;
@@ -27,33 +26,18 @@ public class OrientationHandler {
         this.displayRotationPreviewOrientationMap.put(Surface.ROTATION_270, 180);
     }
 
-    public Mat rotate(Mat bitmap) {
+    public Bitmap rotate(Bitmap bitmap) {
         int degrees = this.getDegrees();
         if (degrees == 0)
             return bitmap;
         else {
-            int with = bitmap.width();
-            int height = bitmap.height();
-/*
-            if (rotflag == 1){
-                transpose(matImage, matImage);
-                flip(matImage, matImage,1); //transpose+flip(1)=CW
-            } else if (rotflag == 2) {
-                transpose(matImage, matImage);
-                flip(matImage, matImage,0); //transpose+flip(0)=CCW
-            } else if (rotflag ==3){
-                flip(matImage, matImage,-1);    //flip(-1)=180
-            } else if (rotflag != 0){ //if not 0,1,2,3:
-                cout  << "Unknown rotation flag(" << rotflag << ")" << endl;
-            }
-            org.opencv.core.Core.transpose();
+            int with = bitmap.getWidth();
+            int height = bitmap.getHeight();
 
-            Mat mtx = new Matrix();
+            Matrix mtx = new Matrix();
             mtx.setRotate(degrees);
 
             return Bitmap.createBitmap(bitmap, 0, 0, with, height, mtx, true);
-            */
-            return null;
         }
     }
 
